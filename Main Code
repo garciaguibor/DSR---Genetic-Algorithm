@@ -10,8 +10,8 @@
 
 #define PONTEIROS 21 // Bus connection pointers
 #define RADIAIS 100	 // 200 Vectors representing the set of the best solutions(CMS)
-#define CSQ 20	     // Quality Solutions Suite (CSQ)
-#define range_ms 40   // Sets 40 percent to random power
+#define CSQ 20	     // Quality Solutions Suite (CSQ) - in the paper the test was carried out with 10 radials
+#define range_ms 40  // Sets 40 percent to random power
 #define NUM_ITERACOES_MS 1000  // Defines maximum number of iterations
 
 // Declaration of Structures
@@ -811,11 +811,11 @@ void grava_arquivo(int nbarras, struct RAMODINAMICO* listaRamoDinamico, struct R
 int testa_nbarras(void) {
     int sai = 0;
     int nbarras;
-    puts("\n\t\t   *** ELECTRICAL POWER DISTRIBUTION SYSTEM ***");
+    puts("\n\t   *** ELECTRICAL POWER DISTRIBUTION SYSTEM ***");
     while (sai == 0) {
-        puts("\t---------------------------------------------------------------------");
-        puts("\tChoose the number of bars - Existing systems (14, 33, 84, 136 or 415)");
-        puts("\t---------------------------------------------------------------------");
+        puts(" ---------------------------------------------------------------------");
+        puts(" Choose the number of bars - Existing systems (14, 33, 84, 136 or 415)");
+        puts(" ---------------------------------------------------------------------");
         fflush(stdin);
         scanf("%d", &nbarras);
         switch (nbarras) {
@@ -898,7 +898,6 @@ void copiarOrdemBarra(struct BARRADINAMICA* listaBarraDinamica, struct BARRADINA
     }
     *copiaBarraDinamica = novaRaiz; // Assigns the new copied list to the output pointer.
 }
-
 
 // This function adjusts the numbers of bars in the branches of a dynamic bar list.
 void igualaNumeroBarraRamo(struct BARRADINAMICA* listaBarraDinamica, int numBarras)
@@ -1094,7 +1093,7 @@ float backward_com_perdas(struct BARRADINAMICA* raiz_barra, const int num_barras
 {
     int r, b; // Control variables for loops
     float perdas; // Initialize the loss accumulator
-    float corrente_total_real; // Real component of total current
+    float corrente_total_real; // real component of total current
     float corrente_total_imag; // Imaginary component of the total current
     struct BARRADINAMICA* barra; // Pointer to current bar
     // Reverse loop to cycle through bars from last to second
@@ -1102,48 +1101,48 @@ float backward_com_perdas(struct BARRADINAMICA* raiz_barra, const int num_barras
     barra = NULL;
     for (b = num_barras; b > 1; b--)
     {
-        barra = busca_barra_na_lista(raiz_barra, b); // Obtém a barra com número 'b'
-        calculaCorrenteBarra(barra); // Calcula a corrente total na barra
-        corrente_total_real = barra->Ir; // Componente real da corrente total
-        corrente_total_imag = barra->Ii; // Componente imaginária da corrente total
-        struct RAMODINAMICO* ramo_total = NULL; // Ponteiro para o ramo de saída
-        // Loop para percorrer os ramos da barra
+        barra = busca_barra_na_lista(raiz_barra, b); // Gets the bar with number 'b'
+        calculaCorrenteBarra(barra); // Calculates the total current in the bar
+        corrente_total_real = barra->Ir; // Real component of total current
+        corrente_total_imag = barra->Ii; // Imaginary component of the total current
+        struct RAMODINAMICO* ramo_total = NULL; // Pointer to output branch
+        // Loop to traverse the bar branches
         for (r = 0; r < barra->qramos; r++)
         {
-            struct RAMODINAMICO* ramo = barra->rmo[r]; // Obtém o ramo atual
-            if (ramo->radial == 1) // Verifica se o ramo é radial
+            struct RAMODINAMICO* ramo = barra->rmo[r]; // Gets the current branch
+            if (ramo->radial == 1) // Checks if the branch is radial
             {
                 if ((barra->barra <= ramo->numero_bs) && (barra->barra <= ramo->numero_be))
                 {
-                    corrente_total_real += ramo->Ir; // Soma a componente real da corrente do ramo
-                    corrente_total_imag += ramo->Ii; // Soma a componente imaginária da corrente do ramo
+                    corrente_total_real += ramo->Ir; // Sum the real component of the branch current
+                    corrente_total_imag += ramo->Ii; // Sum the imaginary component of the branch current
                 }
                 else
                 {
-                    ramo_total = ramo; // Define o ramo como o ramo de saída
+                    ramo_total = ramo; // Sets the branch as the output branch
                 }
             }
         }
-        ramo_total->Ir = corrente_total_real; // Atualiza a componente real da corrente no ramo de saída
-        ramo_total->Ii = corrente_total_imag; // Atualiza a componente imaginária da corrente no ramo de saída
-        perdas += perda_no_ramo(ramo_total); // Calcula as perdas no ramo de saída e acumula no total
-        barra = barra->ant; // Move para a próxima barra (anterior na lista)
+        ramo_total->Ir = corrente_total_real; // Updates the real component of the current in the output branch
+        ramo_total->Ii = corrente_total_imag; // Updates the imaginary component of the current in the output branch
+        perdas += perda_no_ramo(ramo_total); // Calculates losses in the outgoing branch and accumulates them in total
+        barra = barra->ant; // Move to the next bar (previous in the list)
     }
-    return perdas; // Retorna o total de perdas calculadas
+    return perdas; // Returns the total calculated losses
 }
 
-// Esta função calcula as perdas em um ramo da rede elétrica.
+// This function calculates losses in a branch of the electrical network.
 float perda_no_ramo(struct RAMODINAMICO* ramo)
 {
-    // A fórmula para calcular as perdas é baseada na Lei de Ohm: P = R * (I^2), onde R é a resistência do ramo
-    // e I é a corrente que passa por ele.
+    // The formula for calculating losses is based on Ohm's Law: P = R * (I^2), where R is the branch resistance
+    // and I is the current passing through it.
     float perdas = (ramo->R * ((ramo->Ir * ramo->Ir) + (ramo->Ii * ramo->Ii)));
-    return perdas; // Retorna o valor das perdas calculadas.
+    return perdas; // Returns the value of calculated losses.
 }
 
 float renumeracao_e_fluxo(struct BARRADINAMICA* raiz_barra, const int qtd_barras, const struct globais globais)
 {
-    // Inicializa a renumeração das barras na rede
+    // Initializes the renumbering of buses in the network
     struct BARRADINAMICA* copiaListaBarraDinamica = NULL;
     copiarOrdemBarra(raiz_barra, &copiaListaBarraDinamica);
     renumerar(raiz_barra, qtd_barras);
@@ -1155,57 +1154,57 @@ float renumeracao_e_fluxo(struct BARRADINAMICA* raiz_barra, const int qtd_barras
 
 float calcularFluxoPotencia(struct BARRADINAMICA* raiz_barra, const int qtd_barras, const struct globais globais)
 {
-    float perda_ativa, nova_perda_ativa; // Variáveis para armazenar perdas ativas
-    int i;         // Variáveis de controle   testar: printf(" Vi: %f Ir: %f  Ii: %f\n", barra_atual->Vi, barra_atual->Ir, barra_atual->Ii); getch();
+    float perda_ativa, nova_perda_ativa; // Variables for storing active losses
+    int i;         // Test control variables: printf(" Vi: %f Ir: %f  Ii: %f\n", barra_atual->Vi, barra_atual->Ir, barra_atual->Ii); getch();
     int convergiu;
-    struct BARRADINAMICA* barra_atual;// Inicializa a barra atual como a primeira da lista
+    struct BARRADINAMICA* barra_atual;// Initializes the current bar as the first in the list
     convergiu = 0;
     perda_ativa = 0;
     barra_atual = raiz_barra->prox;
-    // Loop de convergência
+    // Convergence loop
     while (!convergiu)
     {
-        if (!foward_com_restricoes(raiz_barra, qtd_barras, globais))// Nova etapa de cálculo "Forward"
+        if (!foward_com_restricoes(raiz_barra, qtd_barras, globais))// New "Forward" calculation step
         {
             return -1;
         }
-        nova_perda_ativa = backward_com_perdas(raiz_barra, qtd_barras); // Calcula novas perdas ativas
-        // Verifica a convergência comparando as perdas ativas
+        nova_perda_ativa = backward_com_perdas(raiz_barra, qtd_barras); // Calculates new active losses
+        // Check convergence by comparing active losses
         if (fabs(nova_perda_ativa - perda_ativa) < globais.tol)
         {
-            convergiu = 1; // Se a diferença for menor que a tolerância, a convergência é alcançada
+            convergiu = 1; // If the difference is less than the tolerance, convergence is achieved
         }
-        perda_ativa = nova_perda_ativa; // Atualiza o valor das perdas para a próxima iteração
+        perda_ativa = nova_perda_ativa; // Updates the loss value for the next iteration
     }
-    return perda_ativa; // Retorna o valor final das perdas ativas
+    return perda_ativa; // Returns the final value of active losses
 }
 
 void voltar_numeracao_original(struct BARRADINAMICA* listaBarraDinamica, struct BARRADINAMICA* copiaListaBarraDinamica)
 {
-    // Inicialização de ponteiros para percorrer as listas.
+    //Initialization of pointers for scrolling through lists.
     struct BARRADINAMICA* barra = listaBarraDinamica->prox;
     struct BARRADINAMICA* ref_barra = copiaListaBarraDinamica->prox;
     struct RAMODINAMICO* ramo = NULL;
     int r;
-    // Primeiro loop: Atualiza a estrutura da lista original com a cópia da lista.
+    // First loop: Update the original list structure with the copy of the list.
     while (ref_barra != copiaListaBarraDinamica)
     {
-        barra->barra = ref_barra->barra; // Atualiza o campo "barra" na estrutura com numeração original.
-        barra = barra->prox; // Move para o próximo elemento na lista original.
-        ref_barra = ref_barra->prox; // Move para o próximo elemento na cópia da lista.
+        barra->barra = ref_barra->barra; // Updates the "slash" field in the structure with original numbering.
+        barra = barra->prox; // Moves to the next element in the original list.
+        ref_barra = ref_barra->prox; // Moves to the next element in the list copy.
     }
-    // Reinicializa o ponteiro para percorrer novamente a lista original.
+    // Resets the pointer to cycle through the original list again.
     barra = listaBarraDinamica->prox;
-    // Segundo loop: Atualiza os números de ramos na lista original.
+    // Second loop: Updates the branch numbers in the original list.
     while (barra != listaBarraDinamica)
     {
         for (r = 0; r < barra->qramos; r++)
         {
             ramo = barra->rmo[r];
-            ramo->numero_be = ramo->be->barra; // Atualiza o número da barra de entrada.
-            ramo->numero_bs = ramo->bs->barra; // Atualiza o número da barra de saída.
+            ramo->numero_be = ramo->be->barra; // Update input bar number.
+            ramo->numero_bs = ramo->bs->barra; // Updates the output bar number.
         }
-        barra = barra->prox; // Move para o próximo elemento na lista original.
+        barra = barra->prox; // Move to the next element in the original list.
     }
 }
 // ***************** MULTSTART*********************************************
@@ -1213,21 +1212,21 @@ void voltar_numeracao_original(struct BARRADINAMICA* listaBarraDinamica, struct 
 // Função para criar e inicializar uma nova topologia
 struct listaRadiais* criarlistaRadiais(struct BARRADINAMICA* listaBarraDinamica, struct RAMODINAMICO* listaRamosUsados, struct RAMODINAMICO* listRamosAbertos, float perdaTotal)
 {
-    struct listaRadiais* listaRadiais = (struct listaRadiais*)malloc(sizeof(struct listaRadiais)); // Aloca espaço para a nova topologia
-    listaRadiais->listaBarraDinamica = listaBarraDinamica; // Atribui a lista de barras dinâmicas à nova topologia
+    struct listaRadiais* listaRadiais = (struct listaRadiais*)malloc(sizeof(struct listaRadiais)); // Allocate space for the new topology
+    listaRadiais->listaBarraDinamica = listaBarraDinamica; // Assigns the dynamic bus list to the new topology
     listaRadiais->listaRamosUsados = listaRamosUsados;
     listaRadiais->listRamosAbertos = listRamosAbertos;
-    listaRadiais->perdaTotal = perdaTotal; // Atribui a perda total à nova topologia
-    listaRadiais->prox = listaRadiais; // Inicializa o ponteiro para a próxima topologia como NULL
-    listaRadiais->ant = listaRadiais; // Inicializa o ponteiro para a topologia anterior como NULL
-    return listaRadiais; // Retorna a nova topologia criada
+    listaRadiais->perdaTotal = perdaTotal; // Attributes the total loss to the new topology
+    listaRadiais->prox = listaRadiais; // Initializes the pointer to the next topology as NULL
+    listaRadiais->ant = listaRadiais; // Initializes the pointer to the previous topology as NULL
+    return listaRadiais; // Returns the new topology created
 }
 
-// Função para adicionar uma nova topologia à lista
+// Function to add a new topology to the list
 void adicionarlistaRadiais(struct listaRadiais** listalistaRadiais, struct listaRadiais* listaRadiais)
 {
-    listaRadiais->prox = *listalistaRadiais; // A nova topologia aponta para a lista de topologias existente
-    *listalistaRadiais = listaRadiais; // Atualiza a lista de topologias para incluir a nova topologia
+    listaRadiais->prox = *listalistaRadiais; // The new topology points to the existing topology list
+    *listalistaRadiais = listaRadiais; // Updates the topology list to include the new topology
 }
 
 void gravarTopologias(struct listaRadiais* raizListaRadiais, int nbarras, struct globais globais, const char nome_arquivo[])
@@ -1236,14 +1235,14 @@ void gravarTopologias(struct listaRadiais* raizListaRadiais, int nbarras, struct
     char arquivo_saida[100];
     struct listaRadiais* radial;
     snprintf(arquivo_saida, sizeof(arquivo_saida), nome_arquivo, nbarras);
-    FILE* arquivo = fopen(arquivo_saida, "w"); // Abre um arquivo chamado "Saida_topologias.txt" para escrita
+    FILE* arquivo = fopen(arquivo_saida, "w"); // Opens a file called .txt for writing
     if (arquivo == NULL)
     {
-        printf("Erro ao abrir o arquivo.\n"); // Se houver erro na abertura do arquivo, exibe uma mensagem de erro
+        printf("Erro ao abrir o arquivo.\n");
         return;
     }
-    // Escreve informações iniciais no arquivo
-    fprintf(arquivo, "Sistema de %d Barras", nbarras);
+    // Write initial information to the file
+    fprintf(arquivo, "System %d Bars", nbarras);
     i = 0;
     for (radial = raizListaRadiais->prox; radial != raizListaRadiais; radial = radial->prox)
     {
@@ -1261,31 +1260,31 @@ void gravarTopologias(struct listaRadiais* raizListaRadiais, int nbarras, struct
         struct RAMODINAMICO* ramos_livres = radial->listRamosAbertos;
         fprintf(arquivo, "\nDisconnected Branches:\n\n");
         struct RAMODINAMICO* atual;
-        // Loop para escrever as informações de cada ramo desconectado no arquivo
+        // Loop to write information for each disconnected branch to the file
         for (atual = ramos_livres->prox; atual != ramos_livres; atual = atual->prox)
         {
             fprintf(arquivo, "Ramo: %2d -- De: %2d -- Para: %2d -- ", atual->ramo, atual->be->barra, atual->bs->barra);
             fprintf(arquivo, "I: %.8f j%.8f PU -- ", atual->Ir, atual->Ii);
-            fprintf(arquivo, "LOSS: %.8f\n", 0); // Neste caso, a perda é sempre 0 para ramos desconectados
+            fprintf(arquivo, "LOSS: %.8f\n", 0); // In this case, the loss is always 0 for disconnected branches
         }
         struct RAMODINAMICO* ramos_usados = radial->listaRamosUsados;
         fprintf(arquivo, "\nConnected Branches:\n\n");
         struct RAMODINAMICO* atual2;
-        // Loop para escrever as informações de cada ramo conectado no arquivo
+        // Loop to write information for each connected branch to the file
         for (atual2 = ramos_usados->prox; atual2 != ramos_usados; atual2 = atual2->prox)
         {
-            fprintf(arquivo, "Ramo: %2d -- De: %2d -- Para: %2d -- ", atual2->ramo, atual2->be->barra, atual2->bs->barra);
+            fprintf(arquivo, "Branch: %2d -- De: %2d -- To: %2d -- ", atual2->ramo, atual2->be->barra, atual2->bs->barra);
             fprintf(arquivo, "I: %.8f j%.8f PU -- ", atual2->Ir, atual2->Ii);
-            fprintf(arquivo, "Perda: %.8f\n", perda_no_ramo(atual2)); // Chama a função para calcular a perda no ramo
+            fprintf(arquivo, "Loss: %.8f\n", perda_no_ramo(atual2)); // Calls the function to calculate the loss in the branch
         }
         // Escreve as perdas totais no arquivo
         fprintf(arquivo, "\nLOSS: %.8f PU\n", radial->perdaTotal);
         fprintf(arquivo, "LOSS: %.8f KW\n", radial->perdaTotal * 100000);
 
     }
-    fclose(arquivo); // Fecha o arquivo
+    fclose(arquivo);
     printf("\n--------------------------------------------------");
-    printf("\nResults saved in %s\n", arquivo_saida); // Exibe mensagem de conclusão
+    printf("\nResults saved in %s\n", arquivo_saida);
     printf("--------------------------------------------------\n\n");
 }
 
@@ -1296,26 +1295,26 @@ void novasBarraseRamos(struct BARRADINAMICA** listaBarraLivre, struct RAMODINAMI
     constroi_teia(*listaRamosLivres, *listaBarraLivre);
 }
 
-// Função para realizar a abordagem multstart
+// Function to perform the multstart approach
 struct listaRadiais* multstart(struct listaRadiais* raizListaRadiais, struct BARRAESTATICA* listaBarraEstatica, struct RAMOESTATICO* listaRamoEstatico, int NUM_BARRAS, const struct globais globais)
 {
-    // Declaração de variáveis
+    // Declaration of variables
     int numTopologiasFactiveis;
     int numTopologiasDescartadas;
     int i, posicao;
-    // Inicialização das variáveis
+    // Variable initialization
     numTopologiasFactiveis = 0;
     numTopologiasDescartadas = 0;
     posicao = 1;
-    // Loop para gerar e avaliar múltiplas topologias
+    // Loop to generate and evaluate multiple topologies
     for (i = 0; i < NUM_ITERACOES_MS; i++)
-    {   // declara e cria as listas que serão avaliadas, e caso factíveis, serão posteriormente guardadas
+    {   // declares and creates the lists that will be evaluated, and if feasible, will be subsequently saved
         struct BARRADINAMICA* listaBarraDinamica_MS = NULL;
         struct RAMODINAMICO* listaRamoDinamico_MS = NULL;
         novasBarraseRamos(&listaBarraDinamica_MS, &listaRamoDinamico_MS, listaBarraEstatica, listaRamoEstatico, globais);
         atribuir_peso_ramos_dinamicos(listaRamoEstatico, listaRamoDinamico_MS);
-        alteraPesos(listaRamoDinamico_MS); // Altera os pesos dos ramos
-        // Aplica o PRIM
+        alteraPesos(listaRamoDinamico_MS); // Change branch weights
+        // Apply PRIM
         struct RAMODINAMICO* arvoreGeradoraMinima_MS = PRIM(listaBarraDinamica_MS, globais.nref);
         struct RAMODINAMICO* ramosLivres_MS = listaRamoDinamico_MS;
         if (verifica_e_armazena_ou_libera(raizListaRadiais, listaBarraDinamica_MS, arvoreGeradoraMinima_MS, ramosLivres_MS, NUM_BARRAS, globais))
@@ -1328,7 +1327,7 @@ struct listaRadiais* multstart(struct listaRadiais* raizListaRadiais, struct BAR
             numTopologiasDescartadas++;
         }
     }
-    printf("Total Topologies Generated: %d\n", numTopologiasFactiveis + numTopologiasDescartadas); // Exibe estatísticas
+    printf("Total Topologies Generated: %d\n", numTopologiasFactiveis + numTopologiasDescartadas);
     printf("Feasible Topologies: %d\n", numTopologiasFactiveis);
     printf("Discarded Topologies: %d\n", numTopologiasDescartadas);
     return raizListaRadiais;
@@ -1336,27 +1335,27 @@ struct listaRadiais* multstart(struct listaRadiais* raizListaRadiais, struct BAR
 
 int verifica_e_armazena_ou_libera(struct listaRadiais* raizListaRadiais, struct BARRADINAMICA* listaBarraDinamica, struct RAMODINAMICO* ramosUsados, struct RAMODINAMICO* ramosLivres, int NUM_BARRAS, const struct globais globais)
 {
-    // Verifica se a configuração radial é diferente da lista de ramos livres
+    // Checks if the radial configuration is different from the free branch list
     if (radialFactivel(listaBarraDinamica, ramosUsados, NUM_BARRAS))
     {
         if (radial_diferente(raizListaRadiais, ramosLivres))
         {
-            // Realiza renumeração e cálculo de perdas
+            // Performs renumbering and calculation of losses
             float perdas = renumeracao_e_fluxo(listaBarraDinamica, NUM_BARRAS, globais);
             if (perdas > 0)
             {
-                // Armazena a nova configuração
+                // Stores the new configuration
                 armazena_radial(raizListaRadiais, listaBarraDinamica, ramosUsados, ramosLivres, perdas);
-                return 1; // Indica sucesso
+                return 1; // Indicates success
             }
         }
     }
 
-    // Caso infactíveis, libera as listas de barras e ramos
+    // If unfeasible, release the lists of bars and branches
     liberarListaBarraDinamica(listaBarraDinamica);
     liberarListaRamoDinamico(ramosUsados);
     liberarListaRamoDinamico(ramosLivres);
-    return 0; // Retorna 0 indicando que a operação não foi bem sucedida
+    return 0; // Returns 0 indicating that the operation was not successful
 }
 
 void insere_radial_prox_pos(struct listaRadiais* radial_atual, struct listaRadiais* nova_radial)
@@ -1367,69 +1366,69 @@ void insere_radial_prox_pos(struct listaRadiais* radial_atual, struct listaRadia
     nova_radial->ant = radial_atual;
 }
 
-// Esta função cria uma nova configuração radial, e a insere na lista de configurações radiais, mantendo a ordem crescente de perdas.
+// This function creates a new radial configuration, and inserts it into the list of radial configurations, maintaining the ascending order of losses.
 void armazena_radial(struct listaRadiais* raizListaRadiais, struct BARRADINAMICA* listaBarraDinamica, struct RAMODINAMICO* ramosUsados, struct RAMODINAMICO* ramosLivres, float perdas)
 {
-    // Cria uma nova configuração radial
+    //Create a new radial configuration
     struct listaRadiais* nova_radial = criarlistaRadiais(listaBarraDinamica, ramosUsados, ramosLivres, perdas);
-    // Inicia a busca pela posição correta na lista
+    //Starts searching for the correct position in the list
     struct listaRadiais* radial_atual = raizListaRadiais;
     while ((radial_atual->prox != raizListaRadiais) && (radial_atual->prox->perdaTotal < nova_radial->perdaTotal))
     {
         radial_atual = radial_atual->prox;
     }
-    // Insere a nova configuração na posição correta
+    // Inserts the new configuration in the correct position
     insere_radial_prox_pos(radial_atual, nova_radial);
 }
 
-//  Esta função verifica se a configuração radial atual é diferente das configurações armazenadas na lista de ramos livres.
+// This function checks whether the current radial configuration is different from the configurations stored in the free branch list.
 int radial_diferente(const struct listaRadiais* const raizListaRadiais, struct RAMODINAMICO* ramosLivres) {
-    // Inicia a verificação pela primeira configuração radial na lista
+    // Starts scanning for the first radial configuration in the list
     const struct listaRadiais* radial_atual = raizListaRadiais->prox;
     while (radial_atual != raizListaRadiais)
     {
-        // Verifica se a topologia da configuração radial atual é diferente da lista de ramos livres
+        // Checks if the topology of the current radial configuration is different from the list of free branches
         if (!topologiasDiferentes(radial_atual->listRamosAbertos, ramosLivres))
         {
-            return 0; // Retorna 0 se encontrou uma configuração igual na lista de ramos livres
+            return 0; // Returns 0 if the same configuration was found in the list of free branches
         }
-        radial_atual = radial_atual->prox; // Passa para a próxima configuração radial
+        radial_atual = radial_atual->prox; // Moves to the next radial configuration
     }
-    return 1; // Retorna 1 se a configuração radial é diferente de todas na lista de ramos livres
+    return 1; //Returns 1 if the radial configuration is different from all in the list of free branches
 }
 
-// Esta função verifica se as topologias de dois conjuntos de ramos estão diferentes. Verifica se há algum ramo em "raiz_desconectados_2" que não está presente em "raiz_desconectados_1".
+// This function checks if the topologies of two sets of branches are different. Checks if there is any branch in "raiz_desconectados_2" that is not present in "raiz_desconectados_1".
 int topologiasDiferentes(struct RAMODINAMICO* raiz_desconectados_1, struct RAMODINAMICO* raiz_desconectados_2)
 {
-    // Inicia a verificação pelo primeiro ramo do segundo conjunto
+    // Start checking for the first branch of the second set
     struct RAMODINAMICO* ramo_atual_2 = raiz_desconectados_2->prox;
     while (ramo_atual_2 != raiz_desconectados_2)
     {
-        // Verifica se o ramo atual do segundo conjunto não está presente no primeiro conjunto
+        // Checks if the current branch of the second set is not present in the first set
         if (!contem_ramo(raiz_desconectados_1, ramo_atual_2->ramo))
         {
-            return 1; // Retorna 1 se encontrou ao menos um ramo diferente
+            return 1; // Returns 1 if at least one different branch was found
         }
-        ramo_atual_2 = ramo_atual_2->prox; // Passa para o próximo ramo do segundo conjunto
+        ramo_atual_2 = ramo_atual_2->prox; // Move to the next branch of the second set
     }
-    return 0; // Retorna 0 se todos os ramos do segundo conjunto estão presentes no primeiro conjunto
+    return 0; // Returns 0 if all branches from the second set are present in the first set
 }
 
-// Esta função verifica se um determinado ramo está presente na lista de ramos.
+// This function checks if a given branch is present in the branch list.
 int contem_ramo(struct RAMODINAMICO* raiz_lista_ramos, int ramo)
 {
-    // Inicia a verificação pelo primeiro ramo da lista
+    // Starts scanning from the first branch in the list
     struct RAMODINAMICO* ramo_atual = raiz_lista_ramos->prox;
     while (ramo_atual != raiz_lista_ramos)
     {
-        // Verifica se o ramo atual é igual ao ramo que está sendo procurado
+        // Checks if the current branch is the same as the branch being searched for
         if (ramo_atual->ramo == ramo)
         {
-            return 1; // Retorna 1 se o ramo está presente na lista
+            return 1; // Returns 1 if the branch is present in the list
         }
-        ramo_atual = ramo_atual->prox; // Passa para o próximo ramo na lista
+        ramo_atual = ramo_atual->prox; // Move to the next branch in the list
     }
-    return 0; // Retorna 0 se o ramo não foi encontrado na lista
+    return 0; // Returns 0 if the branch was not found in the list
 }
 
 void alteraPesos(struct RAMODINAMICO* listaRamoDinamico)
@@ -1438,163 +1437,163 @@ void alteraPesos(struct RAMODINAMICO* listaRamoDinamico)
     // Loop para percorrer a lista de ramos
     while (atual != listaRamoDinamico)
     {
-        // Gera um novo peso aleatório dentro da faixa definida pela constante
-        int variacao = (atual->peso * range_ms / 100); // Variação agora é 40% do peso inicial
+        // Generates a new random weight within the range defined by the constant
+        int variacao = (atual->peso * range_ms / 100); // 40% variation from initial weight
         int novoPeso = atual->peso + rand() % (variacao * 2 + 1) - variacao;
-        atual->peso = novoPeso; // Atualiza o peso do ramo
-        atual = atual->prox; // Move para o próximo ramo na lista
+        atual->peso = novoPeso; // Update branch weight
+        atual = atual->prox; // Move to the next branch in the list
     }
 }
 
 void imprimir_menor_perda_MS(struct listaRadiais* raizListaRadiais, struct globais globais)
 {
-    struct listaRadiais* radial = raizListaRadiais->prox; // imprime apenas o primeiro elemento da lista, que tem o menor peso
+    struct listaRadiais* radial = raizListaRadiais->prox; // prints only the first element in the list, which has the lowest weight
     printf("\nLOSS (pu): %f\nLOSS (kW): %f\n", radial->perdaTotal, radial->perdaTotal * globais.sbase);
 }
 
-// *************************  MAIOR - MENOR DISTANCIA ******* CONJUNTO DE SOLUÇÕES DE QUALIDADE **********************
+// ************************* LONGER - LESSER DISTANCE ******* SET OF QUALITY SOLUTIONS **********************
 
 void insere_radia_fim_lista(struct listaRadiais* raiz_para, struct listaRadiais* radial_de)
 {
-    // retira radial da lista
+    // remove radial from the list
     radial_de->prox->ant = radial_de->ant;
     radial_de->ant->prox = radial_de->prox;
 
-    // insere no fim da nova lista
+    //insert at the end of the new list
     radial_de->ant = raiz_para->ant;
     radial_de->prox = raiz_para;
     radial_de->ant->prox = radial_de;
     radial_de->prox->ant = radial_de;
 }
 
-// Função para criar conjuntos de soluções de qualidade a partir de uma lista de radiais
+// Function to create sets of quality solutions from a list of radials
 void criarConjuntoSolucoes(struct listaRadiais* ConjuntoSolucoesQualidade, int numConjunto, struct listaRadiais* raizListaRadiais)
 {
     int i;
-    // Preenche metade do conjunto inicialmente 50% CSQ (MENORES PERDAS)
+    // Fills half of the pool initially 50% CSQ (LOWEST LOSSES)
     for (i = 1; i <= CSQ / 2; i++)
     {
-        // Insere a próxima radial da lista de radiais na lista de soluções de qualidade
+        // Inserts the next radial from the list of radials into the list of quality solutions
         insere_radia_fim_lista(ConjuntoSolucoesQualidade, raizListaRadiais->prox);
-        // Define a menor distância da última radial inserida como 0 - NÃO COMPARA - TÁ NA COTA
+        // Defines the shortest distance from the last inserted radial to 0 - DOES NOT COMPARE - IT IS IN QUOTA
         ConjuntoSolucoesQualidade->ant->MenorDistancia = 0;
     }
-    // Preenche a outra metade do conjunto com base na maior distância entre ramos abertos
+    // Fills the other half of the set based on the greatest distance between open branches
     while (i <= CSQ)
     {
-        // Encontra a radial da lista de radiais com a maior distância em relação ao conjunto existente
+        // Finds the radial from the list of radials with the greatest distance in relation to the existing set
         struct listaRadiais* selecionada = acha_maior_distancia(ConjuntoSolucoesQualidade, raizListaRadiais);
-        // Insere a radial encontrada na lista de soluções de qualidade
+        // Insert the radial found in the list of quality solutions
         insere_radia_fim_lista(ConjuntoSolucoesQualidade, selecionada);
-        // Incrementa o contador para a próxima iteração
+        // Increments the counter for the next iteration
         i++;
     }
 }
 
-// Função para encontrar a radial com a maior distância entre ramos abertos
+// Function to find a radial with the greatest distance between open branches
 struct listaRadiais* acha_maior_distancia(struct listaRadiais* ConjuntoSolucoesQualidade, struct listaRadiais* raizListaRadiais)
 {
-    // Inicializa a radial atual como a primeira da lista
+    // Initializes the current radial as the first in the list
     struct listaRadiais* atual = raizListaRadiais->prox;
-    // Inicializa a radial selecionada como a primeira da lista
+    // Initialize the selected radial as the first in the list
     struct listaRadiais* selecionada = atual;
-    // Percorre a lista de radiais para calcular e comparar as distâncias
+    // Scroll through the list of radials to calculate and compare distances
     while (atual != raizListaRadiais)
     {
-        // Calcula a menor distância da radial atual em relação ao conjunto de soluções de qualidade
+        // Calculates the shortest distance from the current radial in relation to the set of quality solutions
         atual->MenorDistancia = calcula_menor_distancia(ConjuntoSolucoesQualidade, atual);
-        // Compara a distância atual com a distância da radial selecionada
+        // Compares the current distance with the selected radial distance
         if (atual->MenorDistancia > selecionada->MenorDistancia)
         {
-            // Se a distância atual for maior, atualiza a radial selecionada
+            // If the current distance is greater, updates the selected radial
             selecionada = atual;
         }
-        // Move para a próxima radial na lista
+        // Move to the next radial in the list
         atual = atual->prox;
     }
-    // Retorna a radial com a maior distância entre ramos abertos
+    // Returns the radial with the greatest distance between open branches
     return selecionada;
 }
-// Função para calcular a menor distância entre uma radial atual e um conjunto de soluções de qualidade
+// Function to calculate the shortest distance between a current radial and a set of quality solutions
 int calcula_menor_distancia(struct listaRadiais* ConjuntoSolucoesQualidade, struct listaRadiais* atual)
 {
-    // Inicializa a radial atual no conjunto de soluções de qualidade
+    // Initializes the current radial in the quality solution set
     struct listaRadiais* atual_csq = ConjuntoSolucoesQualidade->prox;
-    // Calcula a distância entre a radial atual e a primeira radial do conjunto
+    // Calculates the distance between the current radial and the first radial in the set
     int distancia = calcula_distancia(atual_csq, atual);
-    // Armazena a distância como a menor distância inicial
+    // Stores the distance as the smallest starting distance
     atual->MenorDistancia = distancia;
-    // Move para a próxima radial no conjunto
+    //Move to the next radial in the set
     atual_csq = atual_csq->prox;
-    // Percorre o restante do conjunto para encontrar a menor distância
+    // Go through the rest of the set to find the shortest distance
     while (atual_csq != ConjuntoSolucoesQualidade)
     {
-        // Calcula a distância entre a radial atual e a radial do conjunto
+        // Calculates the distance between the current radial and the set radial
         distancia = calcula_distancia(atual_csq, atual);
-        // Compara a distância calculada com a menor distância atual
+        // Compares the calculated distance with the current shortest distance
         if (distancia < atual->MenorDistancia)
         {
-            // Se a distância calculada for menor, atualiza a menor distância
+            // If the calculated distance is smaller, update the shortest distance
             atual->MenorDistancia = distancia;
         }
-        // Move para a próxima radial no conjunto
+        // Move to the next radial in the set
         atual_csq = atual_csq->prox;
     }
-    // Retorna a menor distância encontrada entre a radial atual e o conjunto
+    // Returns the shortest distance found between the current radial and the set
     return atual->MenorDistancia;
 }
 
-// Função para buscar um ramo em uma lista dinâmica
-// Parâmetros: - raiz_lista: nó raiz da lista dinâmica de ramos - num: número do ramo a ser buscado na lista
-// Retorna: O ponteiro para o nó correspondente ao ramo encontrado ou NULL se não encontrado
+// Function to search for a branch in a dynamic list
+// Parameters: - rootlist: root node of the dynamic list of branches - num: number of the branch to be searched for in the list
+// Returns: The pointer to the node corresponding to the found branch or NULL if not found
 struct RAMODINAMICO* busca_ramo_na_lista(struct RAMODINAMICO* raiz_lista, int num)
 {
-    // Inicializa o ponteiro atual para apontar para o primeiro nó após a raiz
+    // Initializes the current pointer to point to the first node after the root
     struct RAMODINAMICO* atual = raiz_lista->prox;
-    // Percorre a lista até encontrar o nó raiz novamente
+    // Go through the list until you find the root node again
     while (atual != raiz_lista)
     {
-        // Verifica se o número do ramo do nó atual é igual ao número desejado
+        // Checks if the branch number of the current node is equal to the desired number
         if (atual->ramo == num)
         {
-            // Se encontrado, retorna o ponteiro para o nó atual
+            // If found, returns the pointer to the current node
             return atual;
         }
-        // Move para o próximo nó na lista
+        // Move to the next node in the list
         atual = atual->prox;
     }
-    // Se o ramo não for encontrado, retorna NULL
+    // If the branch is not found, returns NULL
     return NULL;
 }
 
-// Função para calcular a distância entre duas radiais com base nos ramos abertos
-// Retorna: Número de ramos comuns entre as duas radiais (distância)
+// Function to calculate the distance between two radials based on open branches
+// Returns: Number of common branches between the two radials (distance)
 int calcula_distancia(struct listaRadiais* radial1, struct listaRadiais* radial2)
 {
-    // Obtém as listas de ramos abertos de cada radial
+    // Gets the list of open branches for each radial
     struct RAMODINAMICO* lista_ramos_1 = radial1->listRamosAbertos;
     struct RAMODINAMICO* lista_ramos_2 = radial2->listRamosAbertos;
-    // Inicializa a distância como zero
+    // Initializes the distance to zero
     int distancia = 0;
-    // Inicializa o ponteiro para o primeiro nó após a raiz da lista de ramos da segunda radial
+    // Initializes the pointer to the first node after the root of the branch list of the second radial
     struct RAMODINAMICO* ramo_atual_2 = lista_ramos_2->prox;
-    // Percorre a lista de ramos da segunda radial
+    // Scroll through the list of branches of the second radial
     while (ramo_atual_2 != lista_ramos_2)
     {
-        // Verifica se o ramo atual da segunda radial está presente na lista de ramos da primeira radial
+        // Checks if the current branch of the second radial is present in the list of branches of the first radial
         if (busca_ramo_na_lista(lista_ramos_1, ramo_atual_2->ramo) != NULL)
         {
-            // Se presente, incrementa a distância
+            // If present, increases the distance
             distancia++;
         }
-        // Move para o próximo nó na lista de ramos da segunda radial
+        // Move to the next node in the list of branches on the second radial
         ramo_atual_2 = ramo_atual_2->prox;
     }
-    // Retorna a distância entre as duas radiais
+    // Returns the distance between the two radials
     return distancia;
 }
 
-// Função para liberar recursos dentro da estrutura
+// Function to release resources within the structure
 void liberarConjuntoSolucoes(struct listaRadiais* ConjuntoSolucoesQualidade)
 {
     struct listaRadiais* atual = ConjuntoSolucoesQualidade->prox;
@@ -1607,6 +1606,7 @@ void liberarConjuntoSolucoes(struct listaRadiais* ConjuntoSolucoesQualidade)
     free(atual);
 }
 
+//Debug function - Function to release resources within the structure
 void imprimirConjuntoSolucoesQualidade(struct listaRadiais* ConjuntoSolucoesQualidade)
 {
     int i;
@@ -1621,215 +1621,213 @@ void imprimirConjuntoSolucoesQualidade(struct listaRadiais* ConjuntoSolucoesQual
     }
 }
 
+//*********************************** GENETIC ALGORITHM*********** *******************************
 
-//*********************************** ALGORITMO GENÉTICO****************************************************
-
-// Esta função clona uma lista de ramos dinâmicos em duas novas listas: uma para ramos usados e outra para ramos livres.
+// This function clones a list of dynamic branches into two new lists: one for used branches and one for free branches.
 void clonarListaRamos(const struct RAMODINAMICO* listaRamos, struct RAMODINAMICO* listaUsados, struct RAMODINAMICO* listaLivres, const int roleta)
 {
-    // Inicialização do contador n para controle do número de ramos clonados.
+    // Initialization of counter n to control the number of cloned branches.
     int n = 1;
-    // Avança para o próximo ramo na lista original.
+    // Advance to the next branch in the original list.
     listaRamos = listaRamos->prox;
-    // Enquanto ainda não clonamos todos os ramos requeridos pela roleta...
+    // While we have not yet cloned all the branches required by roulette
     while (n < roleta)
     {
-        // Busca o ramo na lista de ramos livres.
+        // Search for the branch in the list of free branches.
         struct RAMODINAMICO* aux = busca_ramo_na_lista(listaLivres, listaRamos->ramo);
-        // Insere o ramo encontrado no final da lista de ramos usados.
+        // Inserts the found branch at the end of the list of used branches.
         insere_ramo_no_fim_da_lista(listaUsados, aux);
-        // Marca o ramo como radial.
+        // Mark the branch as radial.
         aux->radial = 1;
-        // Avança para o próximo ramo na lista original.
+        // Advance to the next branch in the original list.
         listaRamos = listaRamos->prox;
-        // Incrementa o contador de ramos clonados.
+        // Increments the cloned branch counter.
         n++;
     }
 }
 
-int roleta(const int CSQs) // roleta de "2" até CSQ
+int roleta(const int CSQs) // roulette from "2" to CSQ
 {
     return rand() % (CSQs - 2) + 2;
 }
 
-// Esta função copia as barras usadas de uma lista de barras dinâmicas para outra lista, enquanto também atualiza o status de ativação das barras.
+// This function copies the used bars from one dynamic bar list to another list, while also updating the bars' activation status.
 void copiaBarrasUsadas(const struct BARRADINAMICA* listaBarras, struct BARRADINAMICA* barrasUsadas, struct BARRADINAMICA* barrasLivres)
 {
-    // Inicialização do ponteiro de barra para o primeiro elemento da lista original.
+    // Bars pointer initialization to the first element of the original list.
     const struct BARRADINAMICA* barra = listaBarras->prox;
-    // Enquanto não alcançamos o final da lista original...
+    // Until we reach the end of the original list
     while (barra != listaBarras)
     {
-        // Busca a barra na lista de barras livres.
+        // Search for the bar in the list of free bars.
         struct BARRADINAMICA* aux = busca_barra_na_lista(barrasLivres, barra->barra);
-        // Insere a barra encontrada no final da lista de barras usadas.
+        // Inserts the bar found at the end of the list of used bars.
         inserir_barra_no_fim_da_lista(barrasUsadas, aux);
-        // Atualiza o status de ativação da barra usada com o status da barra original.
+        // Updates the activation status of the used bar with the status of the original bar
         aux->ativa = barra->ativa;
-        // Avança para a próxima barra na lista original.
+        // Advance to the next bar in the original list
         barra = barra->prox;
     }
 }
-// Esta função copia os ramos usados de uma lista de ramos dinâmicos para outra lista, enquanto também atualiza a propriedade radial dos ramos.
+// This function copies used branches from one dynamic branch list to another list, while also updating the radial property of the branches.
 void copiaRamosUsados(const struct RAMODINAMICO* listaRamos, struct RAMODINAMICO* ramosUsados, struct RAMODINAMICO* ramosLivres)
 {
-    // Inicialização do ponteiro de ramo para o primeiro elemento da lista original.
+    // Branch pointer initialization to the first element of the original list.
     const struct RAMODINAMICO* ramo = listaRamos->prox;
-    // Enquanto não alcançamos o final da lista original...
+    // Until we reach the end of the original list
     while (ramo != listaRamos)
     {
-        // Busca o ramo na lista de ramos livres.
+        // Search for the branch in the list of free branches.
         struct RAMODINAMICO* aux = busca_ramo_na_lista(ramosLivres, ramo->ramo);
-        // Insere o ramo encontrado no final da lista de ramos usados.
+        // Inserts the found branch at the end of the list of used branches.
         insere_ramo_no_fim_da_lista(ramosUsados, aux);
-        // Atualiza a propriedade radial do ramo usado com a propriedade do ramo original.
+        // Updates the radial property of the used branch with the property of the original branch.
         aux->radial = ramo->radial;
-        // Avança para o próximo ramo na lista original.
+        // Advances to the next branch in the original list.
         ramo = ramo->prox;
     }
 }
-// Esta função realiza a recombinação genética entre as radiais de uma árvore CSQ, gerando uma nova árvore de radiais com as combinações resultantes.
-// Retorna um ponteiro para a raiz da nova árvore de radiais.
+// This function performs genetic recombination between the radials of a CSQ , generating a new radial  with the resulting combinations.
+// Returns a pointer to the root of the new radial .
 struct listaRadiais* recombinacaoGenetica(const struct listaRadiais* const raizCSQ, const int nbarras, const struct BARRAESTATICA* listaBarras, const struct RAMOESTATICO* listaRamos, const struct globais glob)
 {
-    // Criação de uma nova raiz para a árvore de radiais resultante.
+    // Creating a new root for the resulting radial .
     struct listaRadiais* novaRaiz = criarlistaRadiais(NULL, NULL, NULL, -1);
-    // Inicialização do ponteiro constante para percorrer a árvore CSQ.
+    // Constant pointer initialization to traverse the CSQ .
     const struct listaRadiais* csq = raizCSQ->prox;
-    // Contador para a quantidade de recombinações genéticas bem-sucedidas.
+    // Counter for the number of successful genetic recombinations.
     int qtd_sucesso = 0;
-    // Enquanto não alcançamos o último nó da árvore CSQ...
+    // Until we reach the last node of the CSQ.
     while (csq->prox != raizCSQ)
     {
-        // Inicialização do ponteiro constante para percorrer as radiais.
+        // Constant pointer initialization to traverse radials.
         const struct listaRadiais* radial1 = csq;
-        // Inicialização do ponteiro constante para percorrer as radiais novamente.
+        // Constant pointer initialization to cycle through radials again.
         const struct listaRadiais* radial2 = raizCSQ->prox;
-        // Para cada par de radiais diferentes...
+        // For each pair of different radials
         while (radial2 != raizCSQ)
         {
-            // Verifica se as radiais são diferentes para evitar recombinações redundantes.
+            // Checks whether the radials are different to avoid redundant recombinations.
             if (radial2 != radial1)
             {
-                // Realiza a recombinação genética entre as duas radiais.
+                // It carries out genetic recombination between the two radials.
                 int sucesso = recombinaRadiais(raizCSQ, radial1, radial2, nbarras, listaBarras, listaRamos, glob, novaRaiz);
-                // Incrementa o contador de recombinações genéticas bem-sucedidas.
+                // Increases the counter of successful genetic recombinations.
                 qtd_sucesso += sucesso;
             }
-            // Avança para a próxima radial na árvore CSQ.
+            // Advance to the next radial in the CSQ.
             radial2 = radial2->prox;
         }
-        // Avança para a próxima radial na árvore CSQ.
+        // Advance to the next radial in the CSQ.
         csq = csq->prox;
     }
-    // Imprime a quantidade de combinações genéticas factíveis.
+    // Prints the number of feasible genetic combinations.
     printf("\n%d feasible genetic combinations\n", qtd_sucesso);
-    // Retorna a raiz da nova árvore de radiais.
+    // Returns the root of the new radial list.
     return novaRaiz;
 }
 
-// Esta função ativa as barras na rede, movendo as barras necessárias da lista de barras livres para a lista de barras usadas.
+// This function activates the buses in the network, moving the required buses from the list of free buses to the list of used buses.
 void ativa_barras(struct BARRADINAMICA* barrasLivres, struct BARRADINAMICA* barrasUsadas, const struct globais glob)
 {
-    // Busca a barra de referência na lista de barras livres.
+    // Search for the reference bar in the list of free bars.
     struct BARRADINAMICA* sub = busca_barra_na_lista(barrasLivres, glob.nref);
-    // Move a barra de referência da lista de barras livres para a lista de barras usadas.
+    // Moves the reference bar from the list of free bars to the list of used bars.
     move_barra_livre_para_barra_usada(sub, barrasUsadas);
 
-    // Inicialização do ponteiro para percorrer as barras usadas.
+    // Pointer initialization to cycle through used bars.
     struct BARRADINAMICA* barra = barrasUsadas->prox;
-    // Enquanto não alcançamos o final da lista de barras usadas...
+    // Until we reach the end of the list of used bars
     while (barra != barrasUsadas)
     {
-        // Itera sobre os ramos associados à barra.
+        // Iterates over the branches associated with the bar.
         int i;
         for (i = 0; i < barra->qramos; i++)
         {
-            // Obtém o ponteiro para o ramo atual.
+            // Gets the pointer to the current branch.
             struct RAMODINAMICO* ramo = barra->rmo[i];
-            // Se o ramo está marcado como radial...
+            // If the branch is marked as radial
             if (ramo->radial)
             {
-                // Obtém a barra livre associada ao ramo.
+                // Gets the free bar associated with the branch.
                 struct BARRADINAMICA* barra_para_ativar = retorna_barra_livre(ramo);
-                // Move a barra livre para a lista de barras usadas.
+                // Moves the free bar to the list of used bars.
                 move_barra_livre_para_barra_usada(barra_para_ativar, barrasUsadas);
             }
         }
-        // Avança para a próxima barra na lista de barras usadas.
+        // Advances to the next bar in the list of used bars.
         barra = barra->prox;
     }
 }
 
-// Esta função conta o número de ramos radiais presentes nas listas de ramos usados e livres.
-// Retorna o número total de ramos radiais encontrados nas duas listas.
+// This function counts the number of radial branches present in the used and free branch lists.
+// Returns the total number of radial branches found in the two lists.
 int _conta_ramos_radiais(struct RAMODINAMICO const* const ramos_usados, struct RAMODINAMICO const* const ramos_livres)
 {
-    // Inicialização do contador.
     int conta = 0;
-    // Inicialização do ponteiro constante para percorrer a lista de ramos livres.
+    // Constant pointer initialization to traverse the list of free branches.
     struct RAMODINAMICO const* atual = ramos_livres->prox;
-    // Enquanto não alcançamos o final da lista de ramos livres...
+    // Until we reach the end of the list of free branches
     while (atual != ramos_livres)
     {
-        // Se o ramo atual está marcado como radial, incrementa o contador.
+        // If the current branch is marked as radial, increment the counter.
         if (atual->radial)
             conta++;
-        // Avança para o próximo ramo na lista de ramos livres.
+        // Advance to the next branch in the list of free branches.
         atual = atual->prox;
     }
-    // Reinicializa o ponteiro constante para percorrer a lista de ramos usados.
+    // Reset the constant pointer to cycle through the list of used branches.
     atual = ramos_usados->prox;
-    // Enquanto não alcançamos o final da lista de ramos usados...
+    // Until we reach the end of the list of used branches
     while (atual != ramos_usados)
     {
-        // Se o ramo atual está marcado como radial, incrementa o contador.
+        // If the current branch is marked as radial, increment the counter.
         if (atual->radial)
             conta++;
-        // Avança para o próximo ramo na lista de ramos usados.
+        // Advance to the next branch in the list of used branches.
         atual = atual->prox;
     }
-    // Retorna o número total de ramos radiais encontrados nas duas listas.
+    // Returns the total number of radial branches found in the two lists.
     return conta;
 }
 
-// Função para realizar a recombinação genética entre duas radiais
-// Parâmetros:
-//   - raiz_csq: ponteiro constante para a raiz da árvore CSQ.
-//   - radial1: ponteiro constante para a primeira radial a ser combinada.
-//   - radial2: ponteiro constante para a segunda radial a ser combinada.
-//   - nbarras: inteiro indicando o número total de barras na rede.
-//   - listaBarras: ponteiro constante para a lista de barras estáticas.
-//   - listaRamos: ponteiro constante para a lista de ramos estáticos.
-//   - glob: estrutura contendo variáveis globais do sistema.
-//   - novaRaiz: ponteiro para a nova raiz da árvore de radiais resultante da recombinação.
-// Retorno:
-//   - 1 se a recombinação for factível, 0 caso contrário.
+// Function to perform genetic recombination between two radials
+// Parameters:
+// - csq_root: constant pointer to the root of the CSQ tree.
+// - radial1: constant pointer to the first radial to be combined.
+// - radial2: constant pointer to the second radial to be combined.
+// - nbars: integer indicating the total number of bars in the network.
+// - barlist: constant pointer to the list of static bars.
+// - branchlist: constant pointer to the list of static branches.
+// - glob: structure containing global system variables.
+// - newRoot: pointer to the new root of the radial tree resulting from the recombination.
+// Return:
+// - 1 if recombination is feasible, 0 otherwise.
 int recombinaRadiais(const struct listaRadiais* const raiz_csq, const struct listaRadiais* radial1, const struct listaRadiais* radial2, const int nbarras, const struct BARRAESTATICA* listaBarras, const struct RAMOESTATICO* listaRamos, const struct globais glob, struct listaRadiais* novaRaiz)
 {
-    // Inicialização de variáveis e estruturas necessárias para a recombinação genética.
+    // Initialization of variables and structures necessary for genetic recombination.
     struct BARRADINAMICA* barrasLivres,* barrasUsadas;
     struct RAMODINAMICO* ramosLivres, * ramosUsados;
     ramosUsados = cria_novo_ramo_dinamico();
     barrasUsadas = cria_nova_barra_dinamica();
     novasBarraseRamos(&barrasLivres, &ramosLivres, listaBarras, listaRamos, glob);
 
-    // Ativa a subestação de referência.
+    // Activates the reference substation.
     move_barra_livre_para_barra_usada(busca_barra_na_lista(barrasLivres, glob.nref), barrasUsadas);
 
-    // Define a posição da roleta para a recombinação.
+    // Sets the roulette wheel position for recombination.
     int posicaoRoleta = roleta(nbarras);
 
-    // Implementa a lógica de recombinação genética
+    // Implements genetic recombination logic
     const struct RAMODINAMICO* ramoAtualRadial1 = radial1->listaRamosUsados->prox;
     int i = 1;
-    // Percorre até a posição sorteada pela roleta na primeira radial
+    // Scroll to the position drawn by the roulette wheel in the first radial
     while ((i < posicaoRoleta) && (ramoAtualRadial1 != radial1->listaRamosUsados))
     {
-        // Verifica se o ramo atual da radial1 já está na nova radial
+        // Checks if the current branch of radial1 is already in the new radial
         if (!contem_ramo(ramosUsados, ramoAtualRadial1->ramo))
         {
-            // Se não estiver, inclui na nova radial
+            // If not, include it in the new radial
             struct RAMODINAMICO* aux = busca_ramo_na_lista(ramosLivres, ramoAtualRadial1->ramo);
             if ((aux->be->ativa + aux->bs->ativa) == 1)
             {
@@ -1843,14 +1841,14 @@ int recombinaRadiais(const struct listaRadiais* const raiz_csq, const struct lis
         ramoAtualRadial1 = ramoAtualRadial1->prox;
     }
 
-    // Percorre a segunda radial a partir da posição sorteada pela roleta
+    // Travel the second radial from the position drawn by the roulette wheel
     const struct RAMODINAMICO* ramoAtualRadial2 = radial2->listaRamosUsados->prox;
     while ((i <= (nbarras - 1)) && (ramoAtualRadial2 != radial2->listaRamosUsados))
     {
-        // Verifica se o ramo atual da radial2 já está na nova radial
+        // Checks if the current branch of radial2 is already in the new radial
         if (!contem_ramo(ramosUsados, ramoAtualRadial2->ramo))
         {
-            // Se não estiver, inclui na nova radial
+            // If not, include it in the new radial
             struct RAMODINAMICO* aux = busca_ramo_na_lista(ramosLivres, ramoAtualRadial2->ramo);
             if ((aux->be->ativa + aux->bs->ativa) == 1)
             {
@@ -1864,14 +1862,14 @@ int recombinaRadiais(const struct listaRadiais* const raiz_csq, const struct lis
         ramoAtualRadial2 = ramoAtualRadial2->prox;
     }
 
-    // Se a nova radial não foi completamente preenchida, verifica os ramos abertos da segunda radial
+    // If the new radial has not been completely filled, check the open branches of the second radial
     ramoAtualRadial2 = radial2->listRamosAbertos->prox;
     while (i <= (nbarras - 1))
     {
-        // Verifica se o ramo atual da radial2 já está na nova radial
+        // Checks if the current branch of radial2 is already in the new radial
         if (!contem_ramo(ramosUsados, ramoAtualRadial2->ramo))
         {
-            // Se não estiver, inclui na nova radial
+            // If not, include it in the new radial
             struct RAMODINAMICO* aux = busca_ramo_na_lista(ramosLivres, ramoAtualRadial2->ramo);
             if ((aux->be->ativa + aux->bs->ativa) == 1)
             {
@@ -1885,37 +1883,37 @@ int recombinaRadiais(const struct listaRadiais* const raiz_csq, const struct lis
         ramoAtualRadial2 = ramoAtualRadial2->prox;
     }
 
-    // Libera a lista de barras livres
+    // Releases the list of free bars
     liberarListaBarraDinamica(barrasLivres);
 
-    // Implementa a lógica de verificação de factibilidade
+    // Implements feasibility check logic
     if (verifica_e_armazena_ou_libera_genetico(novaRaiz, raiz_csq, barrasUsadas, ramosUsados, ramosLivres, nbarras, glob))
     {
-        return 1; // Retorna 1 indicando que a recombinação é factível
+        return 1; // Returns 1 indicating that recombination is feasible
     }
-    return 0;  // Retorna 0 indicando que a recombinação não é factível
+    return 0;  // Returns 0 indicating that recombination is not feasible
 }
 
-// Função para verificar se uma radial é factível
+// Function to check if a radial is feasible
 int radialFactivel(const struct BARRADINAMICA* listaBarraDinamica, const struct RAMODINAMICO* raiz_ramos_usados, const int nbarras)
 {
-    // Implementação da lógica para verificar se o número de barras conectadas é igual a nbarras
+    // Implementation of logic to check if the number of connected buses is equal to nbars
     int numeroBarrasConectadas = contarBarrasConectadas(listaBarraDinamica);
     if (numeroBarrasConectadas != nbarras)
     {
-        return 0;  // Retorna 0 se o número de barras conectadas não for igual a nbarras
+        return 0;  // Returns 0 if the number of connected bars is not equal to nbars
     }
-    // Implementação da lógica para verificar se o número de ramos conectados é igual a nbarras - 1
+    // Implementation of logic to check if the number of connected branches is equal to nbarras - 1
     int numeroRamosConectados = contarRamosConectados(raiz_ramos_usados);
     return (numeroRamosConectados == nbarras - 1);
 }
 
-// Função para contar o número de barras conectadas
+// Function to count the number of connected bars
 int contarBarrasConectadas(const struct BARRADINAMICA* listaBarraDinamica)
 {
     int contador = 0;
     struct BARRADINAMICA* atual = listaBarraDinamica->prox;
-    // Percorre a lista de barras
+    // Scroll through the list of bars
     while (atual != listaBarraDinamica)
     {
         contador++;
@@ -1924,11 +1922,11 @@ int contarBarrasConectadas(const struct BARRADINAMICA* listaBarraDinamica)
     return contador;
 }
 
-// Função para contar o número de ramos conectados
+// Function to count the number of connected branches
 int contarRamosConectados(const struct RAMODINAMICO* raiz_ramos_usados) {
     int contador = 0;
     struct RAMODINAMICO* atual = raiz_ramos_usados->prox;
-    // Percorre a lista de ramos
+    // Scroll through the list of branches
     while (atual != raiz_ramos_usados) {
         contador++;
         atual = atual->prox;
@@ -1938,22 +1936,22 @@ int contarRamosConectados(const struct RAMODINAMICO* raiz_ramos_usados) {
 
 int verifica_e_armazena_ou_libera_genetico(struct listaRadiais* raizListaRadiais_genetico, const struct listaRadiais* const raizListaRadiais_CSQ, struct BARRADINAMICA* listaBarraDinamica, struct RAMODINAMICO* ramosUsados, struct RAMODINAMICO* ramosLivres, int NUM_BARRAS, const struct globais globais)
 {
-    // Verifica se a configuração radial é diferente da lista de ramos livres
+    // Checks if the radial configuration is different from the free branch list
     if (radialFactivel(listaBarraDinamica, ramosUsados, NUM_BARRAS))
     {
-            // Realiza renumeração e cálculo de perdas
+            // Performs renumbering and calculation of losses
             float perdas = renumeracao_e_fluxo(listaBarraDinamica, NUM_BARRAS, globais);
             if (perdas > 0)
             {
-                // Armazena a nova configuração
+                // Stores the new configuration
                 armazena_radial(raizListaRadiais_genetico, listaBarraDinamica, ramosUsados, ramosLivres, perdas);
-                return 1; // Indica sucesso
+                return 1; // Indicates success
             }
     }
 
-    // Caso infactíveis, libera as listas de barras e ramos
+    // If unfeasible, release the lists of bars and branches
     liberarListaBarraDinamica(listaBarraDinamica);
     liberarListaRamoDinamico(ramosUsados);
     liberarListaRamoDinamico(ramosLivres);
-    return 0; // Retorna 0 indicando que a operação não foi bem sucedida
+    return 0; // Returns 0 indicating that the operation was not successful
 }
